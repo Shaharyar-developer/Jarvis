@@ -1,0 +1,51 @@
+name: Change Commit
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  send-webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get commit details
+        id: get_commit
+        run: |
+          MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})
+          if [ -z "$MESSAGE" ]; then
+            echo "Failed to get commit message"
+            exit 1
+          fi
+          echo "message=$MESSAGE" >> $GITHUB_ENV
+
+          AUTHOR=$(git log --format=%an -n 1 ${{ github.event.after }})
+          if [ -z "$AUTHOR" ]; then
+            echo "Failed to get author name"
+            exit 1
+          fi
+          echo "author=$AUTHOR" >> $GITHUB_ENV
+
+          CHANGES=$(git diff --shortstat ${{ github.event.before }} ${{ github.event.after }})
+          echo "changes=$CHANGES" >> $GITHUB_ENV
+
+          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.event.after }}"
+          echo "commit_url=$COMMIT_URL" >> $GITHUB_ENV
+          FOOTER=$(date)
+          echo "footer=$FOOTER" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Send POST request
+        run: |
+          PAYLOAD=$(jq -n \
+                        --arg title "${{ env.message }}" \
+                        --arg description "Changes - ${{ env.changes }}" \
+                        --arg url "${{ env.commit_url }}" \
+                        --arg footer "${{ env.footer }}" \
+                        --arg author "${{ env.author }}" \
+                        '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
+          curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://nyx-bot.vercel.app/
