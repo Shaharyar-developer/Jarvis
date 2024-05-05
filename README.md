@@ -8,11 +8,3 @@ clone this repository
 ```bash
 git clone https://github.com/Shaharyar-developer/nyx.git
 ```
-### Installation
-```bash
-pnpm install
-```
-### Usage
-```bash
-pnpm start
-```

@@ -2,7 +2,7 @@
 ---
 ## Week 1
 - [x] Create a project repository on GitHub
-- [x] Create Initial Project Structure
+- [] Create Initial Project Structure
 - [] Create Initial Project Documentation With Planning
 
 # Week 2

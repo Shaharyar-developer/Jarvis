@@ -1,21 +1,26 @@
 {
   "name": "nyx",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
-  "main": "./src/index.ts",
+  "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node dist/src/index.js",
-    "compile:ffi": "gcc -shared -o ./FFI/main.so  server/main.c"
+    "build": "tsc",
+    "start": "tsc && node dist/index.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "shaharyar",
+  "license": "MIT",
   "devDependencies": {
-    "@types/ffi-napi": "^4.0.10",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "ffi-napi": "^4.0.3"
-  }
+    "@t3-oss/env-core": "^0.10.1",
+    "@types/node": "^20.12.8",
+    "dotenv": "^16.4.5",
+    "elevenlabs": "^0.4.1",
+    "openai": "^4.41.0",
+    "zod": "^3.23.6"
+  },
+  "type": "module"
 }
