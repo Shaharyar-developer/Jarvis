@@ -11,13 +11,7 @@ const micInstance = mic({
 });
 
 let moments: number[] = [];
-const consecutives: {
-  cZeros: number[];
-  cOnes: number[];
-} = {
-  cZeros: [],
-  cOnes: [],
-};
+
 const checkSpeech = (moments: number[]): speech => {
   const lastTenMoments = moments.slice(-10);
 
