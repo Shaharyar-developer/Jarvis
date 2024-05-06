@@ -5,18 +5,28 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node dist/index.js"
+    "start": "bun run ./src/index.ts"
   },
   "keywords": [],
   "author": "Shaharyar",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@t3-oss/env-core": "^0.10.1",
-    "@types/node": "^20.12.9",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
     "mic": "^2.1.2",
     "node-vad": "^1.1.4",
+    "openai": "^4.42.0",
     "typescript": "^5.4.5",
     "zod": "^3.23.6"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^20.12.10",
+    "tsconfig-paths": "^4.2.0",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
 }
