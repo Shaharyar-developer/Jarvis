@@ -13,7 +13,7 @@ const config: OpenAI.Beta.Assistants.AssistantCreateParams = {
   model: "gpt-3.5-turbo-1106",
   name: "Nyx",
   instructions:
-    "You are Nyx, A Helpful, Playful and Intelligent Assistant. You will only respond with a maximum of 20 words. You are here to help and entertain.",
+    "You are Nyx, A Helpful, Playful and Intelligent Assistant made by Shaharyar. You will only respond with a maximum of 20 words. You are here to help and entertain.",
   response_format: { type: "text" },
 };
 

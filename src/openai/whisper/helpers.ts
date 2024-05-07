@@ -1,77 +1,31 @@
 import fs from "fs";
-import { nanoid } from "nanoid";
-import { checkSpeech } from "@/lib/utils";
-import ffmpeg from "fluent-ffmpeg";
 import { PassThrough } from "stream";
-import { sleep } from "bun";
-import { initializeOpenAI, openai } from "../init";
-
-const captureAudioForTranscription = async () => {
-  let counter = 0;
-  let started = false;
+import ffmpeg from "fluent-ffmpeg";
+import { getFeatures } from "./vad";
+/**
+ * @todo Implement a queue for audio chunks and get algorithm from gramo
+ */
+export const captureAudioForTranscription = async () => {
   let dir = "./tmp";
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
-  const filePath = `./${dir}/${nanoid()}.wav`;
+  const passThrough = new PassThrough({ highWaterMark: 1024 });
 
-  const file = fs.createWriteStream(filePath, { encoding: "binary" });
-
-  const passThrough = new PassThrough();
-
-  let processing = false;
-
-  const command = ffmpeg("default")
+  const writeStream = fs.createWriteStream("./tmp/output.wav");
+  writeStream.on("close", async () => {
+    const buffer = Buffer.from(fs.readFileSync("./tmp/output.wav"));
+    const features = getFeatures(buffer, 1024);
+    controller.end();
+    return features;
+  });
+  const controller = ffmpeg("default")
     .inputFormat("alsa")
+    .duration(0.5)
     .audioChannels(1)
-    .audioFrequency(44100)
+    .audioFrequency(16000)
     .outputFormat("wav")
-    .on("start", () => {
-      processing = true;
-    })
-    .on("end", () => {
-      processing = false;
-    })
     .pipe(passThrough, { end: true });
 
-  passThrough.pipe(file);
-
-  while (true) {
-    const speechCheck = await checkSpeech();
-    console.log(speechCheck.speech);
-
-    if (speechCheck.speech) {
-      started = true;
-      counter = 0;
-    }
-    if (started) {
-      if (!speechCheck.speech) {
-        counter++;
-        if (counter === 5) {
-          started = false;
-          if (processing) {
-            await new Promise((resolve) => command.on("end", resolve));
-          }
-          command.end();
-          break;
-        }
-      }
-    }
-    await sleep(200);
-  }
-
-  return filePath;
+  passThrough.pipe(writeStream);
 };
-
-const transcribeAudio = async (filePath: string) => {
-  initializeOpenAI();
-  const transcription = await openai?.audio.transcriptions.create({
-    model: "whisper-1",
-    response_format: "json",
-    language: "english",
-    file: fs.createReadStream(filePath),
-  });
-  return transcription?.text;
-};
-
-export { captureAudioForTranscription, transcribeAudio };
