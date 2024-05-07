@@ -1,4 +1,4 @@
-import { env } from "../../lib/env.js";
+import { env } from "@/lib/env";
 import OpenAI from "openai";
 import {
   getAssistantId,
@@ -7,7 +7,7 @@ import {
   setThreadId,
   getRunId,
   setRunId,
-} from "../../lib/redis-vars.js";
+} from "@/lib/redis-vars";
 
 const config: OpenAI.Beta.Assistants.AssistantCreateParams = {
   model: "gpt-3.5-turbo-1106",

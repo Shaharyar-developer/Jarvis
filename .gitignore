@@ -5,3 +5,5 @@ venv
 node_modules
 pnpm-lock.yaml
 dist
+__pycache__
+bun.lockb

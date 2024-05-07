@@ -5,6 +5,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "source ./venv/bin/activate && fastapi dev ./py_server/fapi_server.py --port 3000",
     "start": "bun run ./src/index.ts"
   },
   "keywords": [],
