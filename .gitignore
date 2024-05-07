@@ -7,3 +7,4 @@ pnpm-lock.yaml
 dist
 __pycache__
 bun.lockb
+tmp

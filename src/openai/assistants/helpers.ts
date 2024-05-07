@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+import { openai, initializeOpenAI } from "../init";
 import OpenAI from "openai";
 import {
   getAssistantId,
@@ -16,13 +16,6 @@ const config: OpenAI.Beta.Assistants.AssistantCreateParams = {
     "You are Nyx, A Helpful, Playful and Intelligent Assistant. You will only respond with a maximum of 20 words. You are here to help and entertain.",
   response_format: { type: "text" },
 };
-let openai: OpenAI | null = null;
-
-function initializeOpenAI() {
-  if (!openai) {
-    openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-  }
-}
 
 const createOrGetAssistant = async (
   forceNewAssistant = false

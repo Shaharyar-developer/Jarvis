@@ -8,3 +8,5 @@ clone this repository
 ```bash
 git clone https://github.com/Shaharyar-developer/nyx.git
 ```
+### Running
+- This project uses Bunjs. Any other js runtimes won't work.

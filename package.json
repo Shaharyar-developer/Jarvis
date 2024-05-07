@@ -5,7 +5,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "source ./venv/bin/activate && fastapi dev ./py_server/fapi_server.py --port 3000",
+    "server": "source ./venv/bin/activate && fastapi run ./py_server/fapi_server.py --port 3000",
     "start": "bun run ./src/index.ts"
   },
   "keywords": [],
@@ -13,9 +13,12 @@
   "license": "MIT",
   "dependencies": {
     "@t3-oss/env-core": "^0.10.1",
+    "@types/fluent-ffmpeg": "^2.1.24",
     "dotenv": "^16.4.5",
+    "fluent-ffmpeg": "^2.1.2",
     "ioredis": "^5.4.1",
     "mic": "^2.1.2",
+    "nanoid": "^5.0.7",
     "node-vad": "^1.1.4",
     "openai": "^4.42.0",
     "typescript": "^5.4.5",
