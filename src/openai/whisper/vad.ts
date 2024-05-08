@@ -15,7 +15,11 @@ export type AudioFeatures = {
   spectralSkewness: number;
   spectralSlope: number;
   spectralSpread: number;
-  [key: string]: number | number[];
+  loudness: {
+    specific: Float32Array;
+    total: number;
+  };
+  [key: string]: number | number[] | { specific: Float32Array; total: number };
 };
 export function getFeatures(buffer: Buffer, fftSize: number) {
   let wav = new WaveFile(buffer);
@@ -55,10 +59,12 @@ export function getFeatures(buffer: Buffer, fftSize: number) {
         "spectralSkewness",
         "spectralSlope",
         "spectralSpread",
+        "loudness",
       ],
       slice
     );
     feature.push(features);
   }
+
   return feature as AudioFeatures[];
 }

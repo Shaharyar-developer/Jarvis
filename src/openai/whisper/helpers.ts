@@ -5,34 +5,58 @@ import * as contrib from "blessed-contrib";
 import { getFeatures, type AudioFeatures } from "./vad";
 import { sleep } from "bun";
 
-export const captureAudioForTranscription = async () => {
-  let dir = "./tmp";
+export const captureAudioForTranscription = async (feature: Feature) => {
+  const dir = "./tmp";
+  const filePath = `${dir}/output.wav`;
+
+  createDirectoryIfNotExists(dir);
+  const writeStream = createWriteStream(filePath);
+  const controller = setupFfmpeg(writeStream);
+
+  handleStreamClose(writeStream, controller, feature);
+};
+
+const createDirectoryIfNotExists = (dir: string) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
+};
 
-  const writeStream = fs.createWriteStream("./tmp/blank.wav");
-  writeStream.on("close", async () => {
-    const buffer = Buffer.from(fs.readFileSync("./tmp/blank.wav"));
-    controller.end(async () => {
-      handleAudioProcessing(buffer);
-    });
-  });
+const createWriteStream = (filePath: string) => {
+  return fs.createWriteStream(filePath);
+};
 
-  const controller = ffmpeg("default")
+const setupFfmpeg = (writeStream: fs.WriteStream) => {
+  return ffmpeg("default")
     .inputFormat("alsa")
     .native()
     .duration(4)
     .audioChannels(1)
     .audioFrequency(16000)
+    .audioFilters(["volume=1", "highpass=f=200", "lowpass=f=3000", "afftdn"])
     .outputFormat("wav")
     .pipe(writeStream, { end: true });
+};
+
+const handleStreamClose = (
+  writeStream: fs.WriteStream,
+  controller: internal.Writable | internal.PassThrough,
+  feature: Feature
+) => {
+  writeStream.on("close", async () => {
+    const buffer = Buffer.from(fs.readFileSync("./tmp/output.wav"));
+    controller.end(async () => {
+      console.log("Recording Ended");
+      const features = await handleAudioProcessing(buffer);
+      showFeatures(features, feature);
+    });
+  });
 };
 
 export const handleAudioProcessing = async (buffer: Buffer) => {
   await sleep(300);
   const features = getFeatures(buffer, 1024);
-  showFeatures(features);
+
   return features;
 };
 /**
@@ -51,10 +75,30 @@ export const handleAudioProcessing = async (buffer: Buffer) => {
  *   spectralSkewness: number;
  *   spectralSlope: number;
  *   spectralSpread: number;
- *   [key: string]: number | number[];
+ *   loudness: {
+ *      specific: Float32Array;
+ *      total: number;
+ *    };
+ *    [key: string]: number | number[] | { specific: Float32Array; total:       number };
  * };
  */
-export const showFeatures = (features: AudioFeatures[]) => {
+type Feature =
+  | "energy"
+  | "zcr"
+  | "mfcc"
+  | "rms"
+  | "perceptualSpread"
+  | "perceptualSharpness"
+  | "spectralCentroid"
+  | "spectralCrest"
+  | "spectralFlatness"
+  | "spectralKurtosis"
+  | "spectralRolloff"
+  | "spectralSkewness"
+  | "spectralSlope"
+  | "spectralSpread"
+  | "loudness";
+export const showFeatures = (features: AudioFeatures[], feature?: Feature) => {
   const screen = blessed.screen();
   const line = contrib.line({
     width: 180,
@@ -69,8 +113,25 @@ export const showFeatures = (features: AudioFeatures[]) => {
   let series: any[] = [];
   let colorIndex = 0;
 
-  for (let key of Object.keys(features[0])) {
-    if (Array.isArray(features[0][key])) {
+  const keys = feature ? [feature] : Object.keys(features[0]);
+
+  for (let key of keys) {
+    if (key === "loudness") {
+      series.push({
+        title: `${key}.total`,
+        x: Array.from({ length: features.length }, (_, i) =>
+          (i + 1).toString()
+        ),
+        y: features.map(
+          (feature) =>
+            (feature[key] as { specific: Float32Array; total: number }).total
+        ),
+        style: {
+          line: "red",
+        },
+      });
+      colorIndex++;
+    } else if (Array.isArray(features[0][key])) {
       for (let i = 0; i < (features[0][key] as number[]).length; i++) {
         series.push({
           title: `${key}[${i}]`,
@@ -79,7 +140,7 @@ export const showFeatures = (features: AudioFeatures[]) => {
           ),
           y: features.map((feature) => (feature[key] as number[])[i]),
           style: {
-            line: colors[colorIndex % colors.length],
+            line: "red",
           },
         });
         colorIndex++;
@@ -92,7 +153,7 @@ export const showFeatures = (features: AudioFeatures[]) => {
         ),
         y: features.map((feature) => feature[key] as number),
         style: {
-          line: colors[colorIndex % colors.length],
+          line: "red",
         },
       });
       colorIndex++;
@@ -109,8 +170,12 @@ export const showFeatures = (features: AudioFeatures[]) => {
   screen.render();
   return screen;
 };
+// ////////////
+// ////////////
+// ////////////
 
 import { WaveFile } from "wavefile";
+import type internal from "stream";
 
 export const createBlankAudioFile = async () => {
   let dir = "./tmp";
@@ -128,3 +193,16 @@ export const createBlankAudioFile = async () => {
   // Write the buffer to a file
   fs.writeFileSync("./tmp/blank.wav", wav.toBuffer());
 };
+
+// const transcribeAudio = async (filePath: string) => {
+//   initializeOpenAI();
+//   console.log("Transcribing audio");
+//   const transcription = await openai?.audio.transcriptions.create({
+//     model: "whisper-1",
+//     response_format: "json",
+//     language: "english",
+//     file: fs.createReadStream(filePath),
+//   });
+//   if (!transcription) throw new Error("Transcription failed");
+//   return transcription.text;
+// };
