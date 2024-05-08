@@ -47,8 +47,6 @@ export function getFeatures(buffer: Buffer, fftSize: number) {
         "zcr",
         "mfcc",
         "rms",
-        "perceptualSpread",
-        "perceptualSharpness",
         "spectralCentroid",
         "spectralCrest",
         "spectralFlatness",
