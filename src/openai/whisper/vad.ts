@@ -5,16 +5,6 @@ export type AudioFeatures = {
   zcr: number;
   mfcc: number[];
   rms: number;
-  perceptualSpread: number;
-  perceptualSharpness: number;
-  spectralCentroid: number;
-  spectralCrest: number;
-  spectralFlatness: number;
-  spectralKurtosis: number;
-  spectralRolloff: number;
-  spectralSkewness: number;
-  spectralSlope: number;
-  spectralSpread: number;
   loudness: {
     specific: Float32Array;
     total: number;
@@ -46,21 +36,7 @@ export function getFeatures(buffer: Buffer, fftSize: number) {
   for (let i = 0; i < audioData.length; i += fftSize) {
     const slice = audioData.slice(i, i + fftSize);
     const features = Meyda.default.extract(
-      [
-        "energy",
-        "zcr",
-        "mfcc",
-        "rms",
-        "spectralCentroid",
-        "spectralCrest",
-        "spectralFlatness",
-        "spectralKurtosis",
-        "spectralRolloff",
-        "spectralSkewness",
-        "spectralSlope",
-        "spectralSpread",
-        "loudness",
-      ],
+      ["energy", "zcr", "mfcc", "rms", "loudness"],
       slice
     );
     feature.push(features);
