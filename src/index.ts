@@ -1,6 +1,9 @@
-import { captureAudioForTranscription } from "@/openai/whisper/helpers";
+import fs from "fs";
+import { handleAudioProcessing } from "./openai/whisper/helpers";
 
-await captureAudioForTranscription();
+const buffer = Buffer.from(fs.readFileSync("./tmp/taunt.wav"));
+const features = await handleAudioProcessing(buffer);
+fs.writeFileSync("./tmp/features.json", JSON.stringify(features, null, 2));
 
 // const transcription = await transcribeAudio(file);
 
