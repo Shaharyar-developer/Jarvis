@@ -2,13 +2,15 @@ import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import { getFeatures, type AudioFeatures } from "./vad";
 import { Queue } from "@datastructures-js/queue";
+import { nanoid } from "nanoid";
+import { sleep } from "bun";
 
 export const captureAudioForFeatures = async (): Promise<string> => {
   let dir = "./tmp";
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
-  const filePath = "./tmp/output.wav";
+  const filePath = `./tmp/${nanoid()}.wav`;
   const writeStream = fs.createWriteStream(filePath);
   writeStream.on("close", async () => {
     controller.end();
@@ -29,11 +31,11 @@ export const captureAudioForFeatures = async (): Promise<string> => {
 export const extractFeaturesFromFile = async (
   filePath: string
 ): Promise<AudioFeatures[]> => {
+  await sleep(200);
   const buffer = Buffer.from(fs.readFileSync(filePath));
   const features = getFeatures(buffer, 1024);
   return features;
 };
-
 
 export type Averages = {
   energy: number;
@@ -52,7 +54,6 @@ export type AudioFeatureItem = {
 
 export type FeaturesList = AudioFeatureItem[];
 
-let featuresList: FeaturesList = [];
 let index = 0;
 let totalFeatures: Averages = {
   energy: 0,
@@ -86,26 +87,28 @@ const calculateAverages = (count: number): Averages => ({
   },
   mfcc: totalFeatures.mfcc.map((v) => v / count),
 });
+let featuresQueue = new Queue<AudioFeatureItem>();
+
 export async function* getAverageFeaturesFromAudio(): AsyncGenerator<Averages> {
   while (true) {
     const file = await captureAudioForFeatures();
     const featuresArray = await extractFeaturesFromFile(file);
     featuresArray.forEach((features) => {
-      featuresList.push({
+      featuresQueue.enqueue({
         index: index,
         AudioFeatures: features,
       });
       updateTotalFeatures(features);
       index++;
     });
-    if (index >= 10) {
-      featuresList = featuresList.slice(1);
-      totalFeatures = featuresList.reduce((acc, { AudioFeatures }) => {
-        updateTotalFeatures(AudioFeatures);
-        return acc;
-      }, totalFeatures);
+    if (featuresQueue.size() > 10) {
+      const dequeuedItem = featuresQueue.dequeue();
+      if (dequeuedItem) {
+        updateTotalFeatures(dequeuedItem.AudioFeatures);
+      }
     }
-    const averages = calculateAverages(featuresList.length);
+    const averages = calculateAverages(featuresQueue.size());
     yield averages;
+    fs.unlinkSync(file);
   }
 }
