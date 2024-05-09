@@ -1,7 +1,7 @@
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import { getFeatures, type AudioFeatures } from "./vad";
-import { sleep } from "bun";
+import { Queue } from "@datastructures-js/queue";
 
 export const captureAudioForFeatures = async (): Promise<string> => {
   let dir = "./tmp";
@@ -17,7 +17,7 @@ export const captureAudioForFeatures = async (): Promise<string> => {
   const controller = ffmpeg("default")
     .inputFormat("alsa")
     .native()
-    .duration(0.3)
+    .duration(0.1)
     .audioChannels(1)
     .audioFrequency(16000)
     .outputFormat("wav")
@@ -29,7 +29,6 @@ export const captureAudioForFeatures = async (): Promise<string> => {
 export const extractFeaturesFromFile = async (
   filePath: string
 ): Promise<AudioFeatures[]> => {
-  await sleep(300);
   const buffer = Buffer.from(fs.readFileSync(filePath));
   const features = getFeatures(buffer, 1024);
   return features;
