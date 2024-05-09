@@ -1,23 +1,7 @@
-import {
-  captureAudioForFeatures,
-  extractFeaturesFromFile,
-} from "@/openai/whisper/helpers";
-import type { AudioFeatures } from "./openai/whisper/vad";
+import { getAverageFeaturesFromAudio } from "@/openai/whisper/helpers";
 
-type FeaturesList = {
-  index: number;
-  AudioFeatures: AudioFeatures[];
-}[];
+const featuresGenerator = getAverageFeaturesFromAudio();
 
-let featuresList: FeaturesList = [];
-let index = 0;
-while (true) {
-  const file = await captureAudioForFeatures();
-  const features = await extractFeaturesFromFile(file);
-  featuresList.push({
-    index: index,
-    AudioFeatures: features,
-  });
-  index++;
-  console.log(featuresList.map((f) => f.index));
+for await (const features of featuresGenerator) {
+  console.log(features);
 }
