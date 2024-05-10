@@ -1,16 +1,7 @@
 import * as Meyda from "meyda";
+import type { AudioFeatures } from "@/types/audio-features";
 import { WaveFile } from "wavefile";
-export type AudioFeatures = {
-  energy: number;
-  zcr: number;
-  mfcc: number[];
-  rms: number;
-  loudness: {
-    specific: Float32Array;
-    total: number;
-  };
-  [key: string]: number | number[] | { specific: Float32Array; total: number };
-};
+
 export function getFeatures(buffer: Buffer, fftSize: number) {
   let wav = new WaveFile(buffer);
   wav.toBitDepth("32f");
