@@ -1,12 +1,9 @@
 # Project Roadmap
 ---
-## Week 1
+## ToDo
 - [x] Create a project repository on GitHub
 - [x] Create Initial Project Structure
 - [] Create Initial Project Documentation With Planning
-
-# Week 2
- - [x] Add rudimentary VAD (Voice Activity Detection) implementation
- - [] Add typesafe helper functions for FFI
- - [] Add helper functions for generating audio via elevenlab API
+- [x] Add rudimentary VAD (Voice Activity Detection) implementation
+- [] Add helper functions for generating audio via elevenlab API
 
