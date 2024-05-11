@@ -47,11 +47,11 @@ jobs:
           footer: ${{ env.footer }}
           author: ${{ env.author }}
         run: |
-          PAYLOAD=$(jq -n \
-                      --arg title $message \
-                      --arg description Changes - $changes \
-                      --arg url $commit_url \
-                      --arg footer $footer \
-                      --arg author $author \
-                      '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
+          PAYLOAD=$(jq -n -s \
+                  --arg title "$message" \
+                  --arg description "Changes - $changes" \
+                  --arg url "$commit_url" \
+                  --arg footer "$footer" \
+                  --arg author "$author" \
+                  '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
           curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://nyx-bot.vercel.app/
