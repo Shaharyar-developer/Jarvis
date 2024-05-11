@@ -42,10 +42,16 @@ jobs:
       - name: Send POST request
         run: |
           PAYLOAD=$(jq -n \
-                        --argjson title "${{ env.message }}" \
-                        --argjson description "Changes - ${{ env.changes }}" \
-                        --arg url "${{ env.commit_url }}" \
-                        --arg footer "${{ env.footer }}" \
-                        --argjson author "${{ env.author }}" \
+                        --argjson title "$message" \
+                        --argjson description "Changes - $changes" \
+                        --arg url "$commit_url" \
+                        --arg footer "$footer" \
+                        --argjson author "$author" \
                         '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
           curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://nyx-bot.vercel.app/
+        env:
+          message: ${{ env.message }}
+          changes: ${{ env.changes }}
+          commit_url: ${{ env.commit_url }}
+          footer: ${{ env.footer }}
+          author: ${{ env.author }}
