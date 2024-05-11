@@ -48,10 +48,10 @@ jobs:
           author: ${{ env.author }}
         run: |
           PAYLOAD=$(jq -n \
-                        --argjson title "${{ env.message }}" \
-                        --argjson description `Changes - ${{ env.changes }}` \
+                        --arg title "${{ env.message }}" \
+                        --arg description "Changes - \${{ env.changes }}\" \
                         --arg url "${{ env.commit_url }}" \
                         --arg footer "${{ env.footer }}" \
-                        --argjson author "${{ env.author }}" \
+                        --arg author "${{ env.author }}" \
                         '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
           curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://nyx-bot.vercel.app/
