@@ -3,6 +3,25 @@ import { PassThrough } from "stream";
 import * as bc from "blessed-contrib";
 import * as b from "blessed";
 import Meyda from "meyda";
+import fs from "fs";
+
+type Features = {
+  rms: number;
+  zcr: number;
+  energy: number;
+  melBands: number[];
+};
+type Bounds = {
+  top: number;
+  bottom: number;
+};
+type MelBandsBounds = {
+  max: number;
+  min: number;
+};
+
+const SAMPLE_RATE = 44100;
+const BUFFER_SIZE = 1024;
 
 export const captureAudioBuffer = async (
   bufferSize: number
@@ -44,33 +63,41 @@ export const captureAudioBuffer = async (
   });
 };
 
-type Features = {
-  rms: number;
-  zcr: number;
-  energy: number;
-  melBands: number[];
+const captureAudioForTranscription = () => {
+  let resolvePromise: (buffer: Buffer) => void;
+  const stream = new PassThrough();
+  const controller = ffmpeg("default")
+    .inputFormat("alsa")
+    .native()
+    .audioChannels(1)
+    .audioFrequency(44100)
+    .outputFormat("wav")
+    .output(stream);
+
+  const promise = new Promise((resolve, reject) => {
+    resolvePromise = resolve;
+    controller.on("end", () => {
+      const buffer = fs.readFileSync("./tmp/output.wav");
+      resolve(buffer);
+    });
+
+    controller.on("error", reject);
+
+    stream.pipe(fs.createWriteStream("./tmp/output.wav"));
+    controller.run();
+  });
+
+  const stop = () => {
+    stream.pause();
+    stream.end();
+    controller.kill("SIGKILL");
+    const buffer = fs.readFileSync("./tmp/output.wav");
+    resolvePromise(buffer);
+  };
+
+  return { promise, stop };
 };
-
-type Bounds = {
-  top: number;
-  bottom: number;
-};
-
-type MelBandsBounds = {
-  max: number;
-  min: number;
-};
-
-const SAMPLE_RATE = 44100;
-const BUFFER_SIZE = 1024;
-
 let feature: number[] = [];
-let lastFeatures: Features = {
-  rms: 0,
-  zcr: 0,
-  energy: 0,
-  melBands: Array(26).fill(0),
-};
 let bounds = {
   rms: { top: -Infinity, bottom: Infinity },
   zcr: { top: -Infinity, bottom: Infinity },
@@ -82,12 +109,10 @@ const updateBounds = (bounds: Bounds, value: number) => {
   bounds.top = Math.max(bounds.top, value);
   bounds.bottom = Math.min(bounds.bottom, value);
 };
-
 const updateMelBandsBounds = (bounds: MelBandsBounds, bands: number[]) => {
   bounds.max = Math.max(bounds.max, ...bands);
   bounds.min = Math.min(bounds.min, ...bands);
 };
-
 const calculateAverage = (featuresList: Features[]) => {
   let rms = 0;
   let zcr = 0;
@@ -199,13 +224,16 @@ export const plotGraph = (feature: number[]) => {
   line.setData(data);
   screen.render();
 };
-
-export const waitForVad = async () => {
+export const waitForTranscriptionAudio = async () => {
   const featuresList: Features[] = [];
   let hasStartedSpeaking = false;
+  let timesSinceStoppedSpeaking = 0;
+  const audioCaptureControllerStopMethod = captureAudioForTranscription();
   while (true) {
     const data = await captureAudioBuffer(BUFFER_SIZE);
     let audioData = new Int16Array(data.buffer);
+    console.log(timesSinceStoppedSpeaking);
+
     Meyda.sampleRate = SAMPLE_RATE;
     Meyda.bufferSize = BUFFER_SIZE;
     if (audioData.length < BUFFER_SIZE) {
@@ -245,9 +273,22 @@ export const waitForVad = async () => {
       percentageChange.energyChange > 100 &&
       percentageChange.zcrChange <= 50
     ) {
-      if (hasStartedSpeaking) break;
       hasStartedSpeaking = true;
+      timesSinceStoppedSpeaking = 0;
+    } else {
+      if (hasStartedSpeaking) {
+        console.log("Stopped speaking");
+
+        timesSinceStoppedSpeaking++;
+      }
+      if (timesSinceStoppedSpeaking > 20) {
+        console.log(timesSinceStoppedSpeaking);
+        break;
+      }
     }
-    lastFeatures = features;
   }
+  audioCaptureControllerStopMethod.stop();
+  await audioCaptureControllerStopMethod.promise;
+  return true;
 };
+
