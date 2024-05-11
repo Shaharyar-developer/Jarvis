@@ -19,7 +19,8 @@ export const captureAudioBuffer = async (
     let size = 0;
 
     controller.on("end", () => {
-      resolve(Buffer.concat(chunks));
+      const buffer = Buffer.concat(chunks);
+      resolve(buffer);
     });
 
     controller.on("error", reject);
@@ -29,12 +30,27 @@ export const captureAudioBuffer = async (
       size += chunk.length;
       if (size >= bufferSize) {
         stream.pause();
-        resolve(Buffer.concat(chunks));
+        const buffer = Buffer.concat(chunks);
         stream.destroy();
         controller.kill("SIGKILL");
+        resolve(buffer);
       }
     });
 
     controller.run();
   });
 };
+
+// export const test = () => {
+//   const writeStream = fs.createWriteStream("./tmp/output.wav");
+
+//   const controller = ffmpeg("default")
+//     .inputFormat("alsa")
+//     .duration(5)
+//     .audioChannels(1)
+//     .audioFrequency(44100)
+//     .outputFormat("wav")
+//     .output(writeStream);
+
+//   controller.run();
+// };
