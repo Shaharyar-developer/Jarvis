@@ -21,7 +21,7 @@ type MelBandsBounds = {
 };
 
 const SAMPLE_RATE = 44100;
-const BUFFER_SIZE = 512;
+const BUFFER_SIZE = 1024;
 
 let feature: number[] = [];
 let lastFeatures: Features = {
@@ -97,45 +97,31 @@ const calculateAverage = (featuresList: Features[]) => {
     },
   };
 };
-
 const calculatePercentageChange = (
   lastFeatures: Features,
-  currentFeatures: Features,
-  bounds: { rms: Bounds; energy: Bounds; zcr: Bounds; melBands: MelBandsBounds }
+  currentFeatures: Features
 ) => {
-  const calculateChange = (last: number, current: number, bound: Bounds) => {
-    const range = bound.top - bound.bottom;
+  const calculateChange = (last: number, current: number) => {
     const change = current - last;
-    return Math.floor((change / range) * 100);
+    return Math.floor((change / last) * 100);
   };
 
-  const rmsChange = calculateChange(
-    lastFeatures.rms,
-    currentFeatures.rms,
-    bounds.rms
-  );
-  const zcrChange = calculateChange(
-    lastFeatures.zcr,
-    currentFeatures.zcr,
-    bounds.zcr
-  );
+  const rmsChange = calculateChange(lastFeatures.rms, currentFeatures.rms);
+  const zcrChange = calculateChange(lastFeatures.zcr, currentFeatures.zcr);
 
   const energyChange = calculateChange(
     lastFeatures.energy,
-    currentFeatures.energy,
-    bounds.energy
+    currentFeatures.energy
   );
 
   const melBandsMinChange = calculateChange(
     Math.min(...lastFeatures.melBands),
-    Math.min(...currentFeatures.melBands),
-    { top: bounds.melBands.max, bottom: bounds.melBands.min }
+    Math.min(...currentFeatures.melBands)
   );
 
   const melBandsMaxChange = calculateChange(
     Math.max(...lastFeatures.melBands),
-    Math.max(...currentFeatures.melBands),
-    { top: bounds.melBands.max, bottom: bounds.melBands.min }
+    Math.max(...currentFeatures.melBands)
   );
 
   return {
@@ -146,8 +132,7 @@ const calculatePercentageChange = (
     melBandsMaxChange,
   };
 };
-
-const plotGraph = (feature: number[]) => {
+export const plotGraph = (feature: number[]) => {
   let data: bc.Widgets.LineData[] = [];
   const screen = b.screen();
   const line = bc.line({
@@ -157,11 +142,14 @@ const plotGraph = (feature: number[]) => {
       baseline: "magenta",
     },
     xLabelPadding: 3,
-    xPadding: 5,
-    label: "Title",
+    xPadding: 0,
+    label: "Feature Line Graph",
+    border: { type: "line", fg: 5 },
+    mouse: true,
+    bg: "black",
   });
   if (Array.isArray(feature))
-    data = feature.map((f, i) => ({
+    data = feature.map(() => ({
       x: feature.map((_, i) => i.toString()),
       y: feature.map((f) => f),
     }));
@@ -197,15 +185,29 @@ while (true) {
 
   const averages = calculateAverage(featuresList);
   featuresList.push(features);
-  feature.push(features.zcr);
-  if (feature.length > 100) feature.shift();
+  if (feature.length > 50) feature.shift();
 
   const percentageChange = calculatePercentageChange(
-    lastFeatures,
-    features,
-    bounds
+    {
+      energy: averages.averages.energy,
+      rms: averages.averages.rms,
+      zcr: averages.averages.zcr,
+      melBands: averages.averages.melBands,
+    },
+    features
   );
-  plotGraph(feature);
+  if (percentageChange.energyChange > 100 && percentageChange.zcrChange <= 50) {
+    console.log(
+      JSON.stringify(
+        {
+          zcr: percentageChange.zcrChange,
+          energy: percentageChange.energyChange,
+        },
+        null,
+        2
+      )
+    );
+  }
   lastFeatures = features;
 }
 
