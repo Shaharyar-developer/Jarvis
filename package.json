@@ -13,24 +13,29 @@
   "license": "MIT",
   "dependencies": {
     "@datastructures-js/queue": "^4.2.3",
+    "@picovoice/porcupine-node": "^3.0.2",
     "@t3-oss/env-core": "^0.10.1",
     "@types/blessed": "^0.1.25",
     "@types/fluent-ffmpeg": "^2.1.24",
+    "@types/node-wav": "^0.0.3",
     "@types/plotly.js-dist-min": "^2.3.4",
     "audiobuffer-to-wav": "^1.0.0",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.11.0",
     "dotenv": "^16.4.5",
     "fluent-ffmpeg": "^2.1.2",
+    "hono": "^4.3.4",
     "ioredis": "^5.4.1",
     "mathjs": "^12.4.2",
     "meyda": "^5.6.3",
     "mic": "^2.1.2",
     "nanoid": "^5.0.7",
+    "node-wav": "^0.0.2",
     "openai": "^4.42.0",
     "sharp": "^0.33.3",
     "typescript": "^5.4.5",
     "wavefile": "^11.0.0",
+    "webview-bun": "^2.0.0",
     "zod": "^3.23.6"
   },
   "type": "module",
@@ -45,6 +50,7 @@
   "trustedDependencies": [
     "node-vad",
     "protobufjs",
-    "sharp"
+    "sharp",
+    "webview-bun"
   ]
 }
