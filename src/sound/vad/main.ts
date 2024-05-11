@@ -240,19 +240,11 @@ export const waitForVad = async () => {
       features
     );
     if (
+      features.energy > 5_000_000 &&
+      features.zcr < 50 &&
       percentageChange.energyChange > 100 &&
       percentageChange.zcrChange <= 50
     ) {
-      console.log(
-        JSON.stringify(
-          {
-            zcr: percentageChange.zcrChange,
-            energy: percentageChange.energyChange,
-          },
-          null,
-          2
-        )
-      );
       if (hasStartedSpeaking) break;
       hasStartedSpeaking = true;
     }
