@@ -16,21 +16,21 @@ jobs:
       - name: Get commit details
         id: get_commit
         run: |
-          MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})
+          MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }} | jq -Rs .)
           if [ -z "$MESSAGE" ]; then
             echo "Failed to get commit message"
             exit 1
           fi
           echo "message=$MESSAGE" >> $GITHUB_ENV
 
-          AUTHOR=$(git log --format=%an -n 1 ${{ github.event.after }})
+          AUTHOR=$(git log --format=%an -n 1 ${{ github.event.after }} | jq -Rs .)
           if [ -z "$AUTHOR" ]; then
             echo "Failed to get author name"
             exit 1
           fi
           echo "author=$AUTHOR" >> $GITHUB_ENV
 
-          CHANGES=$(git diff --shortstat ${{ github.event.before }} ${{ github.event.after }})
+          CHANGES=$(git diff --shortstat ${{ github.event.before }} ${{ github.event.after }} | jq -Rs .)
           echo "changes=$CHANGES" >> $GITHUB_ENV
 
           COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.event.after }}"
@@ -42,10 +42,10 @@ jobs:
       - name: Send POST request
         run: |
           PAYLOAD=$(jq -n \
-                        --arg title "${{ env.message }}" \
-                        --arg description "Changes - ${{ env.changes }}" \
+                        --argjson title "${{ env.message }}" \
+                        --argjson description "Changes - ${{ env.changes }}" \
                         --arg url "${{ env.commit_url }}" \
                         --arg footer "${{ env.footer }}" \
-                        --arg author "${{ env.author }}" \
+                        --argjson author "${{ env.author }}" \
                         '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
           curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://nyx-bot.vercel.app/
