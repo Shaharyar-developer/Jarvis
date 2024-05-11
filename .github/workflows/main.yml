@@ -49,7 +49,7 @@ jobs:
         run: |
           PAYLOAD=$(jq -n \
                         --argjson title "${{ env.message }}" \
-                        --argjson description "Changes - ${{ env.changes }}" \
+                        --argjson description `Changes - ${{ env.changes }}` \
                         --arg url "${{ env.commit_url }}" \
                         --arg footer "${{ env.footer }}" \
                         --argjson author "${{ env.author }}" \
