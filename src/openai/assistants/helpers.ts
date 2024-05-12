@@ -158,10 +158,9 @@ const submitToolOutputs = async (
       runId,
       { tool_outputs: toolOutputs }
     );
-    if (!stream) throw new Error("Failed to submit tool outputs");
-
     if (!stream)
-      throw new Error(`Failed to submit tool outputs ${toolOutputs}`);
+      throw new Error("Failed to submit tool outputs and get new stream");
+
     return stream;
   } catch (error) {
     console.log(error);
