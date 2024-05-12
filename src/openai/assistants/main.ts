@@ -107,6 +107,6 @@ export async function* chatLoop() {
       }
     }
     yield message;
-    await sleep(750);
+    await sleep(1000);
   }
 }

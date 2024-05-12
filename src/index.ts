@@ -1,6 +1,7 @@
 /**
  * This is the main entry point of the application.
  * This is how it goes:
+ *  Any outstanding runs are first deleted
  *  Chat loop is an async generator
  *  When ran:
  *  1. It creates or gets an assistant, if create then saves its id to redis db
@@ -17,6 +18,9 @@
 
 import { chatLoop } from "@/openai/assistants/main";
 import { say } from "@/elevenlabs/generate";
+import { deleteRun } from "./openai/assistants/helpers";
+
+await deleteRun();
 
 for await (const message of chatLoop()) {
   await say(message);

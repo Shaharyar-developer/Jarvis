@@ -140,8 +140,17 @@ const retrieveRun = async () => {
   const threadId = await getThreadId();
   if (!runId || !threadId) throw new Error("Missing runId or threadId");
   return await openai?.beta.threads.runs.retrieve(threadId, runId, {
-    stream: true,
+    stream: false,
   });
+};
+const deleteRun = async () => {
+  initializeOpenAI();
+  const runId = await getRunId();
+  const threadId = await getThreadId();
+  if (!threadId || !runId) throw new Error("Missing threadId or runId");
+  const run = await retrieveRun();
+  if (run?.status === "completed") return;
+  else return await openai?.beta.threads.runs.cancel(threadId, runId);
 };
 
 const submitToolOutputs = async (
@@ -168,13 +177,12 @@ const submitToolOutputs = async (
   }
 };
 
-
-
 export {
   createOrGetAssistant,
   createOrGetThread,
   addMessageToThread,
   createRun,
   retrieveRun,
+  deleteRun,
   submitToolOutputs,
 };
