@@ -5,23 +5,24 @@ import * as b from "blessed";
 import Meyda from "meyda";
 import fs from "fs";
 
-type Features = {
+export type Features = {
   rms: number;
   zcr: number;
   energy: number;
   melBands: number[];
 };
-type Bounds = {
+export type Bounds = {
   top: number;
   bottom: number;
 };
-type MelBandsBounds = {
+export type MelBandsBounds = {
   max: number;
   min: number;
 };
 
-const SAMPLE_RATE = 44100;
-const BUFFER_SIZE = 1024;
+export const SAMPLE_RATE = 44100;
+export const BUFFER_SIZE = 1024;
+export let BASE_ENERGY: number | undefined;
 
 export const captureAudioBuffer = async (
   bufferSize: number
@@ -63,7 +64,7 @@ export const captureAudioBuffer = async (
   });
 };
 
-const captureAudioForTranscription = () => {
+export const captureAudioForTranscription = () => {
   let resolvePromise: (buffer: Buffer) => void;
   const stream = new PassThrough();
   const controller = ffmpeg("default")
@@ -97,23 +98,26 @@ const captureAudioForTranscription = () => {
 
   return { promise, stop };
 };
-let feature: number[] = [];
-let bounds = {
+export let feature: number[] = [];
+export let bounds = {
   rms: { top: -Infinity, bottom: Infinity },
   zcr: { top: -Infinity, bottom: Infinity },
   energy: { top: -Infinity, bottom: Infinity },
   melBands: { min: Infinity, max: -Infinity },
 };
 
-const updateBounds = (bounds: Bounds, value: number) => {
+export const updateBounds = (bounds: Bounds, value: number) => {
   bounds.top = Math.max(bounds.top, value);
   bounds.bottom = Math.min(bounds.bottom, value);
 };
-const updateMelBandsBounds = (bounds: MelBandsBounds, bands: number[]) => {
+export const updateMelBandsBounds = (
+  bounds: MelBandsBounds,
+  bands: number[]
+) => {
   bounds.max = Math.max(bounds.max, ...bands);
   bounds.min = Math.min(bounds.min, ...bands);
 };
-const calculateAverage = (featuresList: Features[]) => {
+export const calculateAverage = (featuresList: Features[]) => {
   let rms = 0;
   let zcr = 0;
   let energy = 0;
@@ -163,7 +167,7 @@ const calculateAverage = (featuresList: Features[]) => {
     },
   };
 };
-const calculatePercentageChange = (
+export const calculatePercentageChange = (
   lastFeatures: Features,
   currentFeatures: Features
 ) => {
@@ -227,12 +231,14 @@ export const plotGraph = (feature: number[]) => {
 export const waitForTranscriptionAudio = async () => {
   const featuresList: Features[] = [];
   let hasStartedSpeaking = false;
+  let timesSpoken = 0;
   let timesSinceStoppedSpeaking = 0;
+
   const audioCaptureControllerStopMethod = captureAudioForTranscription();
+  console.log("Listening for Speech");
   while (true) {
     const data = await captureAudioBuffer(BUFFER_SIZE);
     let audioData = new Int16Array(data.buffer);
-    console.log(timesSinceStoppedSpeaking);
 
     Meyda.sampleRate = SAMPLE_RATE;
     Meyda.bufferSize = BUFFER_SIZE;
@@ -255,9 +261,9 @@ export const waitForTranscriptionAudio = async () => {
     updateMelBandsBounds(bounds.melBands, features.melBands);
 
     const averages = calculateAverage(featuresList);
+    BASE_ENERGY = averages.averages.energy;
     featuresList.push(features);
     if (feature.length > 50) feature.shift();
-
     const percentageChange = calculatePercentageChange(
       {
         energy: averages.averages.energy,
@@ -269,22 +275,24 @@ export const waitForTranscriptionAudio = async () => {
     );
     if (
       features.energy > 5_000_000 &&
+      features.energy > BASE_ENERGY &&
       features.zcr < 50 &&
       percentageChange.energyChange > 100 &&
       percentageChange.zcrChange <= 50
     ) {
-      hasStartedSpeaking = true;
+      timesSpoken++;
+      if (timesSpoken > 5) hasStartedSpeaking = true;
       timesSinceStoppedSpeaking = 0;
     } else {
       if (hasStartedSpeaking) {
         timesSinceStoppedSpeaking++;
       }
       if (timesSinceStoppedSpeaking > 20) {
-        console.log(timesSinceStoppedSpeaking);
         break;
       }
     }
   }
+  console.log("Speech Captured");
   audioCaptureControllerStopMethod.stop();
   await audioCaptureControllerStopMethod.promise;
   return true;
