@@ -42,4 +42,3 @@ export const say = async (text: string) => {
   }
 };
 
-say("Hello, how are you?");

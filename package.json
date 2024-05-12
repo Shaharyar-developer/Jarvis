@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "docker compose up",
-    "start": "bun run ./src/index.ts"
+    "start": "bun run ./src/index.ts",
+    "app:server": "cd ./desktop/app && bun dev",
+    "app": "cd ./desktop/ && bun run --watch app.ts"
   },
   "keywords": [],
   "author": "Shaharyar",

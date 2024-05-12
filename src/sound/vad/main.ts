@@ -277,8 +277,6 @@ export const waitForTranscriptionAudio = async () => {
       timesSinceStoppedSpeaking = 0;
     } else {
       if (hasStartedSpeaking) {
-        console.log("Stopped speaking");
-
         timesSinceStoppedSpeaking++;
       }
       if (timesSinceStoppedSpeaking > 20) {
