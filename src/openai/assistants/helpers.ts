@@ -9,13 +9,34 @@ import {
   setRunId,
 } from "@/lib/redis-vars";
 
+const tools: OpenAI.Beta.Assistants.AssistantTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "runGetRequest",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "URL to make the GET request to",
+          },
+        },
+
+        required: ["url"],
+      },
+    },
+  },
+];
+
 const config: OpenAI.Beta.Assistants.AssistantCreateParams = {
   model: "gpt-3.5-turbo-1106",
   name: "Nyx",
   instructions:
-    "You are Nyx, A Helpful, Playful and Intelligent Assistant made by Shaharyar. You will only respond with a maximum of 15 words. You are here to help and entertain.",
+    "You are Nyx, A Helpful, Playful and Intelligent Assistant made by Shaharyar. You will only respond with a maximum of 15 words. You are here to help and entertain. You can use functions to fetch data from the web.",
   response_format: { type: "text" },
   temperature: 0.8,
+  tools,
 };
 
 const createOrGetAssistant = async (
@@ -123,10 +144,36 @@ const retrieveRun = async () => {
   });
 };
 
+const submitToolOutputs = async (
+  toolOutputs: OpenAI.Beta.Threads.Runs.RunSubmitToolOutputsParams.ToolOutput[]
+) => {
+  initializeOpenAI();
+  const threadId = await getThreadId();
+  if (!threadId) throw new Error("Missing threadId");
+  const runId = await getRunId();
+  if (!runId) throw new Error("Missing runId");
+  try {
+    const stream = openai?.beta.threads.runs.submitToolOutputsStream(
+      threadId,
+      runId,
+      { tool_outputs: toolOutputs }
+    );
+    if (!stream) throw new Error("Failed to submit tool outputs");
+
+    if (!stream)
+      throw new Error(`Failed to submit tool outputs ${toolOutputs}`);
+    return stream;
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+};
+
 export {
   createOrGetAssistant,
   createOrGetThread,
   addMessageToThread,
   createRun,
   retrieveRun,
+  submitToolOutputs,
 };
