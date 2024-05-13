@@ -1,3 +1,18 @@
 :root {
-    background-color: black;
+    background-image: radial-gradient(circle, #101010, #000);
+    overflow: hidden;
+}
+html {
+    height: 100svh;
+}
+body {
+    height: 100svh;
+}
+.canvas {
+    height: 100svh;
+    position: fixed;
+    z-index: 1000;
+}
+canvas {
+    height: 100svh;
 }
