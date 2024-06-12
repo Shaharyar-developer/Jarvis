@@ -18,9 +18,6 @@
 
 import { say } from "@/elevenlabs/generate";
 import { chatLoop } from "@/openai/assistants/main";
-import { deleteRun } from "./openai/assistants/helpers";
-
-await deleteRun();
 
 for await (const message of chatLoop()) {
   await say(message);
