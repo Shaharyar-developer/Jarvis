@@ -16,8 +16,8 @@ if (!fs.existsSync("./tmp")) {
 
 export async function* chatLoop() {
   let message = "";
-  await createOrGetAssistant();
-  await createOrGetThread();
+  await createOrGetAssistant(true);
+  await createOrGetThread(true);
   while (true) {
     await waitForTranscriptionAudio();
     const transcription = await getTranscription();
