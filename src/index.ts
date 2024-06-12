@@ -16,10 +16,8 @@
  *  10. The message is then passed to the say function which is a wrapper function around the elevenlabs library that takes text, generates audio and then plays it with ffmpeg and alsa
  */
 
-import { say } from "@/elevenlabs/generate";
 import { chatLoop } from "@/openai/assistants/main";
-  
 
 for await (const message of chatLoop()) {
-  await say(message);
+  console.log(message);
 }
