@@ -3,12 +3,17 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/index.ts"
+    "dev": "bun run ./src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.10.1",
+    "ioredis": "^5.4.1",
+    "openai": "^4.52.7"
   }
 }
