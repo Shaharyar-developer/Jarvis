@@ -12,6 +12,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@inquirer/prompts": "^5.2.1",
     "@t3-oss/env-core": "^0.10.1",
     "ioredis": "^5.4.1",
     "openai": "^4.52.7"

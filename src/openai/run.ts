@@ -147,7 +147,6 @@ class Run {
         process.exit();
         break;
       default:
-      // console.log(event.data);
     }
   }
 }

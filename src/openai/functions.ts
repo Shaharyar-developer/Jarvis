@@ -28,6 +28,5 @@ export async function getAllKeyValuePairs(): Promise<Record<string, string>> {
       });
     }
   } while (cursor !== "0");
-  console.log(keyValuePairs);
   return keyValuePairs;
 }
