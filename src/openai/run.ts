@@ -9,6 +9,7 @@ const client = OpenAiClient.getInstance();
 class Run {
   private assistant: OpenAI.Beta.Assistant;
   private thread: OpenAI.Beta.Thread;
+  private temp: string | undefined;
 
   constructor(args: {
     assistant: OpenAI.Beta.Assistant;
@@ -18,17 +19,26 @@ class Run {
     this.thread = args.thread;
   }
 
-  public async createRun(
-    prompt: string,
-  ): Promise<Stream<OpenAI.Beta.Assistants.AssistantStreamEvent>> {
+  public async createRun(prompt: string): Promise<void> {
     await client.beta.threads.messages.create(this.thread.id, {
       role: "user",
       content: prompt,
     });
-    return await client.beta.threads.runs.create(this.thread.id, {
+
+    const stream = await client.beta.threads.runs.create(this.thread.id, {
       assistant_id: this.assistant.id,
       stream: true,
     });
+
+    await this.handleStream(stream);
+  }
+
+  private async handleStream(
+    stream: Stream<OpenAI.Beta.Assistants.AssistantStreamEvent>,
+  ): Promise<void> {
+    for await (const event of stream) {
+      await this.handleRunStreamEvent(event);
+    }
   }
 
   private async submitToolOutputs(
@@ -76,7 +86,6 @@ class Run {
 
           case "getAllFromDB": {
             const data = await getAllKeyValuePairs();
-
             return {
               output: JSON.stringify(data),
               tool_call_id: toolCall.id,
@@ -104,14 +113,12 @@ class Run {
       eventData.required_action!.submit_tool_outputs.tool_calls,
     );
 
-    const stream = await this.submitToolOutputs(
+    const stream = (await this.submitToolOutputs(
       toolOutputs,
       eventData.id,
       this.thread.id,
-    );
-    for await (const event of stream) {
-      this.handleRunStreamEvent(event);
-    }
+    )) as unknown as Stream<OpenAI.Beta.Assistants.AssistantStreamEvent>;
+    await this.handleStream(stream);
   }
 
   public async handleRunStreamEvent(
@@ -132,18 +139,9 @@ class Run {
       }
 
       case "thread.run.requires_action": {
-        this.handleRequiresAction(event.data);
+        await this.handleRequiresAction(event.data);
         break;
       }
-
-      // case "thread.message.completed": {
-      //   console.log(
-      //     event.data.content.map(
-      //       (content) => content.type === "text" && content.text?.value,
-      //     ),
-      //   );
-      //   break;
-      // }
 
       case "thread.run.completed":
         process.exit();

@@ -12,10 +12,4 @@ const assistant = await createOrGetAssistant(true);
 const thread = await createOrGetThread();
 const chat = new Run({ assistant, thread });
 
-//! Handle the stream events more elegantly and abstract the logic to make it easer to test
-
-const stream = await chat.createRun(args);
-
-for await (const event of stream) {
-  chat.handleRunStreamEvent(event);
-}
+await chat.createRun(args);
