@@ -25,7 +25,7 @@ class RedisSingleton {
     if (!RedisSingleton.instance || RedisSingleton.index !== index) {
       RedisSingleton.index = index;
       RedisSingleton.instance = new IoRedis({
-        host: "localhost",
+        host: "redis",
         port: 6379,
         db: index,
       });

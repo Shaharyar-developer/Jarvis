@@ -1,15 +1,23 @@
 import { workspaceDB } from "@/utils/db";
 import { exec } from "child_process";
+import fs from "fs";
 
 export const runCommand = (command: string): Promise<string> => {
+  fs.existsSync(`${process.cwd()}/workspace`)
+    ? null
+    : fs.mkdirSync(`${process.cwd()}/workspace`);
   return new Promise((resolve) => {
-    exec(command, { encoding: "utf-8" }, (error, stdout, stderr) => {
-      if (error) {
-        resolve(`Command failed: ${stderr.trim()}`);
-      } else {
-        resolve(stdout.trim());
-      }
-    });
+    exec(
+      command,
+      { encoding: "utf-8", cwd: `${process.cwd()}/workspace` },
+      (error, stdout, stderr) => {
+        if (error) {
+          resolve(`Command failed: ${stderr.trim()}`);
+        } else {
+          resolve(stdout.trim());
+        }
+      },
+    );
   });
 };
 

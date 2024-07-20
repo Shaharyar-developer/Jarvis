@@ -69,6 +69,7 @@ class Run {
           case "saveToDB": {
             const { key, value } = JSON.parse(toolCall.function.arguments);
             const data = await workspaceDB.set(key, value);
+            const _ = await workspaceDB.get(key);
             return {
               output: data,
               tool_call_id: toolCall.id,
