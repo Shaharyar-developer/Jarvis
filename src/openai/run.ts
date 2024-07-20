@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { OpenAiClient } from "@/utils/instances";
 import db, { workspaceDB } from "@/utils/db";
-import type { Stream } from "openai/streaming.mjs";
+import type { Stream } from "openai/streaming";
 import { getAllKeyValuePairs, runCommand } from "./functions";
 
 const client = OpenAiClient.getInstance();
@@ -70,6 +70,7 @@ class Run {
             const { key, value } = JSON.parse(toolCall.function.arguments);
             const data = await workspaceDB.set(key, value);
             const _ = await workspaceDB.get(key);
+            console.log(key, value, _);
             return {
               output: data,
               tool_call_id: toolCall.id,

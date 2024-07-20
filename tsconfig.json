@@ -6,23 +6,20 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
-
     "noUnusedLocals": false,
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": false,
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "include": ["@girs/gtk-4.0"]
 }

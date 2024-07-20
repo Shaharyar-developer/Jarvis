@@ -2,10 +2,6 @@
 FROM oven/bun:1 AS base
 WORKDIR /usr/src/app
 
-# Set up a directory for application data
-RUN mkdir -p /usr/src/app/data
-
-RUN chown -R bun:bun /usr/src/app/data
 
 # Install dependencies into temp directory
 FROM base AS install
@@ -28,11 +24,6 @@ FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
 COPY --from=prerelease /usr/src/app .
 COPY --from=prerelease /usr/src/app/src/index.ts src/index.ts
-
-# Set up a directory for application data
-RUN mkdir -p /usr/src/app/data
-
-RUN chown -R bun:bun /usr/src/app/data
 
 # Run the app
 USER bun
