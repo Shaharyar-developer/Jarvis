@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import type OpenAI from "openai";
 import { OpenAiClient } from "@/utils/instances";
 import db, { workspaceDB } from "@/utils/db";
 import type { Stream } from "openai/streaming";

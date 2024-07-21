@@ -1,17 +1,22 @@
-import { pipeline, SummarizationPipeline } from "@xenova/transformers";
+import {
+  pipeline,
+  AutomaticSpeechRecognitionPipeline,
+} from "@xenova/transformers";
 import { performance } from "perf_hooks";
+import wavefile from "wavefile";
 
 class LocalModels {
-  private summarizer: SummarizationPipeline | undefined;
+  private transcriber: AutomaticSpeechRecognitionPipeline | undefined;
 
   constructor() {}
 
   async init() {
-    this.summarizer = await pipeline(
-      "summarization",
-      "Xenova/distilbart-cnn-6-6",
+    this.transcriber = await pipeline(
+      "automatic-speech-recognition",
+      "Xenova/whisper-base.en",
       {
         quantized: true,
+
         progress_callback: (progress: unknown) => {
           console.log(progress);
         },
@@ -19,19 +24,44 @@ class LocalModels {
     );
   }
 
-  async summarize(text: string) {
-    if (!this.summarizer) {
+  async transcribe() {
+    if (!this.transcriber) {
       throw new Error(
-        "Summarizer not initialized. Call init() before summarize().",
+        "Transcriber not initialized. Call init() before transcribe().",
       );
     }
+    let url =
+      "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav";
+    let buffer = Buffer.from(await fetch(url).then((x) => x.arrayBuffer()));
 
-    const start = performance.now();
-    const data = await this.summarizer(text, { do_sample: false });
-    const end = performance.now();
+    let wav = new wavefile.WaveFile(buffer);
+    wav.toBitDepth("32f"); // Pipeline expects input as a Float32Array
+    wav.toSampleRate(16000); // Whisper expects audio with a sampling rate of 16000
+    let audioData = wav.getSamples();
+    if (Array.isArray(audioData)) {
+      if (audioData.length > 1) {
+        const SCALING_FACTOR = Math.sqrt(2);
+        // Merge channels (into first channel to save memory)
+        for (let i = 0; i < audioData[0].length; ++i) {
+          audioData[0][i] =
+            (SCALING_FACTOR * (audioData[0][i] + audioData[1][i])) / 2;
+        }
+      }
 
-    console.log(`Time taken: ${(end - start) / 1000} seconds`);
-    return data;
+      // Select first channel
+      audioData = audioData[0];
+      let start = performance.now();
+      let output = await this.transcriber(audioData, {
+        language: "en",
+      });
+      let end = performance.now();
+      console.log(`Execution duration: ${(end - start) / 1000} seconds`);
+      if (Array.isArray(output)) {
+        return output.map((x) => x.text).join(" ");
+      } else {
+        return output.text;
+      }
+    }
   }
 }
 
