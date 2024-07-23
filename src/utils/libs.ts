@@ -1,6 +1,20 @@
 import { OpenAiClient } from "./instances";
+import WaveFile from "wavefile";
+import fs from "fs";
 
 const client = OpenAiClient.getInstance();
+
+async function generate_speech(text: string) {
+  const wav = await client.audio.speech.create({
+    input: text,
+    model: "tts-1-hd",
+    voice: "nova",
+    response_format: "wav",
+    speed: 0.95,
+  });
+  const buffer = Buffer.from(await wav.arrayBuffer());
+  fs.writeFileSync("./tmp/speech.wav", buffer);
+}
 
 async function summarize(text: string) {
   const response = await client.chat.completions.create({
@@ -42,4 +56,4 @@ async function extractKeyPoints(text: string) {
     : "Failed to extract key points";
 }
 
-export { summarize, extractKeyPoints };
+export { summarize, extractKeyPoints, generate_speech };

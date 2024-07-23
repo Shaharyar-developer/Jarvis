@@ -31,7 +31,9 @@ class RedisSingleton {
       });
     }
     RedisSingleton.instance.on("error", () => {
-      throw new Error("Ensure redis client is running and connection params are correct");
+      throw new Error(
+        "Ensure redis client is running and connection params are correct",
+      );
       process.exit(1);
     });
 

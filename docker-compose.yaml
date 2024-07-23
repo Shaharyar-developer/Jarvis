@@ -13,13 +13,19 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/usr/src/app
-      - app-data:/usr/src/app/data
-    # ports:
-    #   - "3000:3000"
+    ports:
+      - "4000:4000"
+      - "3000:3000"
     depends_on:
       - redis
     entrypoint: ["bun", "run", "src/index.ts"]
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/trpc"]
+      interval: 30s
+      retries: 3
+      start_period: 30s
+      timeout: 10s
 
 volumes:
   redis-data:
-  app-data:
