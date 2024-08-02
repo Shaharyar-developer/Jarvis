@@ -54,4 +54,4 @@ jobs:
                   --arg footer "$footer" \
                   --arg author "$author" \
                   '{title: $title, description: $description, url: $url, footer: $footer, author: $author}')
-          curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://nyx-bot.vercel.app/
+          curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" https://jarvis-bot-api.vercel.app/

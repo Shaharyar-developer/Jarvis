@@ -1,15 +1,6 @@
 # Use the official Bun image
 FROM oven/bun:1 AS base
 
-# Install libasound2, VLC, and build tools
-RUN apt-get update && apt-get install -y \
-    libasound2 \
-    vlc \
-    build-essential \
-    python3 \
-    # other dependencies if needed
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /usr/src/app
 
 # Install dependencies into temp directory

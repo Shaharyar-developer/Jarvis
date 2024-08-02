@@ -19,7 +19,6 @@ services:
     depends_on:
       - redis
     entrypoint: ["bun", "run", "src/index.ts"]
-    restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/trpc"]
       interval: 30s

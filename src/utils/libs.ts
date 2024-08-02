@@ -1,6 +1,7 @@
+import type { WaveFile } from "wavefile";
 import { OpenAiClient } from "./instances";
-import WaveFile from "wavefile";
 import fs from "fs";
+import path from "path";
 
 const client = OpenAiClient.getInstance();
 
@@ -14,6 +15,23 @@ async function generate_speech(text: string) {
   });
   const buffer = Buffer.from(await wav.arrayBuffer());
   fs.writeFileSync("./tmp/speech.wav", buffer);
+  return buffer;
+}
+
+async function transcribe(buffer: Buffer) {
+  const tempFilePath = path.join(__dirname, "temp_audio.wav");
+
+  fs.writeFileSync(tempFilePath, buffer);
+
+  const fileStream = fs.createReadStream(tempFilePath);
+
+  const response = await client.audio.transcriptions.create({
+    file: fileStream,
+    model: "whisper-1",
+  });
+
+  fs.unlinkSync(tempFilePath);
+  return response.text;
 }
 
 async function summarize(text: string) {
@@ -56,4 +74,4 @@ async function extractKeyPoints(text: string) {
     : "Failed to extract key points";
 }
 
-export { summarize, extractKeyPoints, generate_speech };
+export { summarize, extractKeyPoints, generate_speech, transcribe };
