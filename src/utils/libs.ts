@@ -29,8 +29,9 @@ async function transcribe(buffer: Buffer) {
     file: fileStream,
     model: "whisper-1",
   });
-
-  fs.unlinkSync(tempFilePath);
+  try {
+    fs.unlinkSync(tempFilePath);
+  } catch (err) {}
   return response.text;
 }
 

@@ -1,4 +1,5 @@
 import type OpenAI from "openai";
+import { EventEmitter } from "events";
 import { OpenAiClient } from "@/utils/instances";
 import db, { workspaceDB } from "@/utils/db";
 import type { Stream } from "openai/streaming";
@@ -6,7 +7,8 @@ import { getAllKeyValuePairs, runCommand } from "./functions";
 
 const client = OpenAiClient.getInstance();
 
-class Run {
+//TODO: Ensure all existing runs are closed before creating a new one
+class Run extends EventEmitter {
   private assistant: OpenAI.Beta.Assistant;
   private thread: OpenAI.Beta.Thread;
   private temp: string | undefined;
@@ -15,11 +17,12 @@ class Run {
     assistant: OpenAI.Beta.Assistant;
     thread: OpenAI.Beta.Thread;
   }) {
+    super();
     this.assistant = args.assistant;
     this.thread = args.thread;
   }
 
-  public async createRun(prompt: string): Promise<void> {
+  public async createRun(prompt: string) {
     await client.beta.threads.messages.create(this.thread.id, {
       role: "user",
       content: prompt,
@@ -30,15 +33,70 @@ class Run {
       stream: true,
     });
 
-    await this.handleStream(stream);
+    this.handleStream(stream);
   }
 
   private async handleStream(
     stream: Stream<OpenAI.Beta.Assistants.AssistantStreamEvent>,
-  ): Promise<void> {
+  ) {
     for await (const event of stream) {
+      this.emit("data", event);
       await this.handleRunStreamEvent(event);
     }
+  }
+
+  private async handleRunStreamEvent(
+    event: OpenAI.Beta.Assistants.AssistantStreamEvent,
+  ) {
+    switch (event.event) {
+      case "error":
+        console.error(event.data);
+        break;
+
+      case "thread.message.delta": {
+        const content = event.data.delta.content
+          ?.map((c) => {
+            if (c.type === "text") {
+              return c.text?.value;
+            }
+          })
+          .filter((value) => value !== undefined)
+          .join("");
+
+        if (content) {
+          this.emit("text", content);
+        }
+        break;
+      }
+
+      case "thread.run.requires_action": {
+        await this.handleRequiresAction(event.data);
+        break;
+      }
+
+      case "thread.run.completed":
+        this.emit("completed");
+        break;
+
+      default:
+      // Handle other cases or ignore
+    }
+  }
+
+  private async handleRequiresAction(
+    eventData: OpenAI.Beta.Assistants.AssistantStreamEvent.ThreadRunRequiresAction["data"],
+  ) {
+    const toolOutputs = await this.processToolCalls(
+      eventData.required_action!.submit_tool_outputs.tool_calls,
+    );
+
+    const stream = (await this.submitToolOutputs(
+      toolOutputs,
+      eventData.id,
+      this.thread.id,
+    )) as unknown as Stream<OpenAI.Beta.Assistants.AssistantStreamEvent>;
+
+    await this.handleStream(stream);
   }
 
   private async submitToolOutputs(
@@ -51,7 +109,6 @@ class Run {
       stream: true,
     });
   }
-
   private async processToolCalls(
     toolCalls: OpenAI.Beta.Threads.Runs.RequiredActionFunctionToolCall[],
   ): Promise<OpenAI.Beta.Threads.Runs.RunSubmitToolOutputsParams.ToolOutput[]> {
@@ -106,50 +163,6 @@ class Run {
       console.log(v.output);
     });
     return data;
-  }
-
-  private async handleRequiresAction(
-    eventData: OpenAI.Beta.Assistants.AssistantStreamEvent.ThreadRunRequiresAction["data"],
-  ) {
-    const toolOutputs = await this.processToolCalls(
-      eventData.required_action!.submit_tool_outputs.tool_calls,
-    );
-
-    const stream = (await this.submitToolOutputs(
-      toolOutputs,
-      eventData.id,
-      this.thread.id,
-    )) as unknown as Stream<OpenAI.Beta.Assistants.AssistantStreamEvent>;
-    await this.handleStream(stream);
-  }
-
-  public async handleRunStreamEvent(
-    event: OpenAI.Beta.Assistants.AssistantStreamEvent,
-  ) {
-    switch (event.event) {
-      case "error":
-        console.error(event.data);
-        break;
-
-      case "thread.message.delta": {
-        event.data.delta.content?.map((content) => {
-          content.type === "text" &&
-            content.text?.value &&
-            process.stdout.write(content.text.value);
-        });
-        break;
-      }
-
-      case "thread.run.requires_action": {
-        await this.handleRequiresAction(event.data);
-        break;
-      }
-
-      case "thread.run.completed":
-        process.exit();
-        break;
-      default:
-    }
   }
 }
 
