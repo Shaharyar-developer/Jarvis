@@ -8,7 +8,7 @@ const client = OpenAiClient.getInstance();
 async function generate_speech(text: string) {
   const wav = await client.audio.speech.create({
     input: text,
-    model: "tts-1",
+    model: "tts-1-hd",
     voice: "onyx",
     response_format: "wav",
   });
