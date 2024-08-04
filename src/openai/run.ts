@@ -73,9 +73,18 @@ class Run extends EventEmitter {
         await this.handleRequiresAction(event.data);
         break;
       }
-
+      case "thread.message.completed":
+        const content = event.data.content
+          .map((v) => {
+            if (v.type === "text") {
+              if (v.text.value) return v.text.value;
+            }
+          })
+          .join("");
+        this.emit("completed", content);
+        break;
       case "thread.run.completed":
-        this.emit("completed");
+        this.emit("end");
         break;
 
       default:
